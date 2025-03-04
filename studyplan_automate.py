@@ -3,6 +3,7 @@ import pickle
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
+import base64
 
 def authenticate_gmail():
     credentials = None
@@ -57,6 +58,8 @@ if __name__ == '__main__':
             subject = ""
             sender = ""
             date = ""
+            
+            # Extract headers
             for header in headers:
                 if header['name'] == 'Subject':
                     subject = header['value']
@@ -64,14 +67,41 @@ if __name__ == '__main__':
                     sender = header['value']
                 if header['name'] == 'Date':
                     date = header['value']
-            
+
                 if target_sender in sender and target_subject in subject:
                     print(f'From: {sender}')
                     print(f'Subject: {subject}')
                     print(f'Date: {date}')
+                    
+                    # Check if the email has an attachment
+                    if 'parts' in msg['payload']:
+                        parts = msg['payload']['parts']
+
+                        for part in parts:
+                            if part.get('filename') and part.get('filename') != '':
+                                # This part contains an attachment
+                                attachment_id = part['body']['attachmentId']
+                                filename = part['filename']
+
+                                if attachment_id:
+                                    # Get the attachment
+                                    attachment = service.users().messages().attachments().get(
+                                        userId='me',
+                                        messageId=msg['id'],
+                                        id=attachment_id
+                                    ).execute()
+
+                                    # Decode the attachment date
+                                    file_data = base64.urlsafe_b64decode(attachment['data'])
+
+                                    # Save the attachment
+                                    with open(filename, 'wb') as f:
+                                        f.write(file_data)
+
+                                    print(f'Saved attachment: {filename}')
+                                    # print(f'Data: {file_data}')
+
                     print('-'*20)
                     break
-                else:
-                    pass
             
             
