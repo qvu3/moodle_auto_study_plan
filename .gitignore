@@ -1,6 +1,7 @@
 venv
 credentials.json
 token.pickle
+moodle_config.py
 
 # Python bytecode
 __pycache__/

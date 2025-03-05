@@ -2,6 +2,7 @@ import requests
 import json
 import os
 from typing import Dict, List, Any, Optional
+import moodle_config
 
 class MoodleAPI:
     def __init__(self, base_url: str, token: str):
@@ -206,8 +207,8 @@ class MoodleAPI:
 # Example usage
 if __name__ == "__main__":
     # Replace with your actual Moodle site URL and token
-    MOODLE_URL = "https://blackbeltprep.com/moodle"
-    MOODLE_TOKEN = "19e2e83b7624d96704ec3030ab6ea73b"
+    MOODLE_URL = moodle_config.MOODLE_URL
+    MOODLE_TOKEN = moodle_config.MOODLE_TOKEN
     
     # Create the Moodle API client
     moodle = MoodleAPI(MOODLE_URL, MOODLE_TOKEN)
