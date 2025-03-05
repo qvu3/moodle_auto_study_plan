@@ -145,6 +145,4 @@ if __name__ == '__main__':
         else:
             print("Failed to retrieve student grades from Moodle")
     else:
-        print("Failed to retrieve weekly report from Gmail")
-            
-            
+        print("Failed to retrieve weekly report from Gmail") 
