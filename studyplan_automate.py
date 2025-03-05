@@ -136,7 +136,7 @@ if __name__ == '__main__':
             grades_file = save_grades_to_csv(student_grades)
             
             # Combine report and grades data using the imported function
-            combined_data = combine_report_and_grades(report_file, grades_file)
+            # combined_data = combine_report_and_grades(report_file, grades_file)
             
             # TODO: Send the combined data to AI API for generating study plans
             # TODO: Send the study plans to students via email
