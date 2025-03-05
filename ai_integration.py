@@ -72,7 +72,7 @@ class AIIntegration:
         The study plan should:
         1. Identify weak areas that need improvement based on the grades
         2. Suggest specific topics to focus on
-        3. Recommend study techniques and resources
+        3. Recommend study techniques and resources (prioritize resources from Black Belt Test Prep such as quizzes, flashcards, and practice tests)
         4. Provide a daily schedule for the week
         5. Include motivational elements and encouragement
         
