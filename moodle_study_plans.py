@@ -40,24 +40,23 @@ def main():
     
     print(f"Successfully retrieved grades for {len(student_grades)} students.")
     
-    # Save grades to CSV
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    grades_file = save_grades_to_csv(student_grades, f"student_grades_{timestamp}.csv")
-    print(f"Grades saved to {grades_file}")
-    
     # Process grades and generate study plans
     print("Generating personalized study plans...")
-    output_dir = f"study_plans_{timestamp}"
+    output_dir = f"study_plans_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     
     # Check if running in Lambda environment
     is_lambda = os.environ.get('BlackBelt_Studyplan_AI_Automation') is not None
     
     # If running in Lambda, use the full path for matching study plans later
     if is_lambda:
-        process_student_grades(grades_file, output_dir)
+        # Skip saving to CSV and pass student_grades directly
+        process_student_grades(student_grades_data=student_grades, output_dir=output_dir)
         full_output_dir = os.path.join('/tmp', output_dir)
     else:
-        process_student_grades(grades_file, output_dir)
+        # For local development, still save to CSV for debugging/record keeping
+        grades_file = save_grades_to_csv(student_grades, f"student_grades_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
+        print(f"Grades saved to {grades_file}")
+        process_student_grades(grades_file=grades_file, output_dir=output_dir)
         full_output_dir = output_dir
     
     print(f"Study plans generated and saved to {full_output_dir}/")

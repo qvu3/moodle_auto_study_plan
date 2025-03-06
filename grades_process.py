@@ -82,17 +82,28 @@ def save_study_plan(student_id: str, student_name: str, study_plan: str, output_
     print(f"Study plan saved to {filename}")
     return filename  # Return the filename for easier access
 
-def process_student_grades(grades_file: str, output_dir: str = "study_plans"):
+def process_student_grades(student_grades_data=None, grades_file=None, output_dir="study_plans"):
     """
     Process student grades and generate personalized study plans.
     
     Args:
-        grades_file: Path to the CSV file containing student grades
+        student_grades_data: Dictionary of student grades (direct in-memory data)
+        grades_file: Path to the CSV file containing student grades (alternative)
         output_dir: Directory to save the study plans
+        
+    Returns:
+        Dictionary mapping student IDs to their study plan file paths
     """
-    # Read student grades
-    students = read_grades_csv(grades_file)
-    print(f"Read grades for {len(students)} students")
+    # Get student grades either from direct data or from CSV file
+    if student_grades_data:
+        students = student_grades_data
+        print(f"Using provided student grades data for {len(students)} students")
+    elif grades_file:
+        students = read_grades_csv(grades_file)
+        print(f"Read grades for {len(students)} students from {grades_file}")
+    else:
+        print("Error: No student grades data or file provided")
+        return {}
     
     # Create AI integration using environment variables
     ai = AIIntegration()
@@ -126,4 +137,4 @@ if __name__ == "__main__":
     grades_file = "student_grades_20250305_134040.csv"  # Update with your actual file
     
     # Process student grades and generate study plans
-    process_student_grades(grades_file)
+    process_student_grades(grades_file=grades_file)
