@@ -65,6 +65,7 @@ build/
 
 # Deployment files
 package/
+lambda_deployment_package.zip
 
 # Local development settings
 .venv

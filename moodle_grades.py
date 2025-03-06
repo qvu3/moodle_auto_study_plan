@@ -55,7 +55,7 @@ def save_grades_to_csv(student_grades, filename=None):
         The path to the saved CSV file
     """
     # Check if running in Lambda environment
-    is_lambda = os.environ.get('BlackBelt_Studyplan_AI_Automation') is not None
+    is_lambda = os.environ.get('AWS_LAMBDA_FUNCTION_NAME') is not None
     
     if filename is None:
         from datetime import datetime

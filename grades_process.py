@@ -61,7 +61,7 @@ def save_study_plan(student_id: str, student_name: str, study_plan: str, output_
         output_dir: Directory to save the study plans
     """
     # Check if running in Lambda environment
-    is_lambda = os.environ.get('BlackBelt_Studyplan_AI_Automation') is not None
+    is_lambda = os.environ.get('AWS_LAMBDA_FUNCTION_NAME') is not None
     
     # If running in Lambda, use /tmp directory
     if is_lambda:

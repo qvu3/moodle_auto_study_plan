@@ -44,8 +44,8 @@ def main():
     print("Generating personalized study plans...")
     output_dir = f"study_plans_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     
-    # Check if running in Lambda environment
-    is_lambda = os.environ.get('BlackBelt_Studyplan_AI_Automation') is not None
+    # Check if running in Lambda environment (more reliable method)
+    is_lambda = os.environ.get('AWS_LAMBDA_FUNCTION_NAME') is not None
     
     # If running in Lambda, use the full path for matching study plans later
     if is_lambda:
