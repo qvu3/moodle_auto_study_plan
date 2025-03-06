@@ -87,17 +87,25 @@ def process_student_grades(student_grades_data=None, grades_file=None, output_di
     Process student grades and generate personalized study plans.
     
     Args:
-        student_grades_data: Dictionary of student grades (direct in-memory data)
+        student_grades_data: Dictionary mapping student IDs to their grade information
         grades_file: Path to the CSV file containing student grades (alternative)
         output_dir: Directory to save the study plans
-        
-    Returns:
-        Dictionary mapping student IDs to their study plan file paths
     """
     # Get student grades either from direct data or from CSV file
-    if student_grades_data:
-        students = student_grades_data
-        print(f"Using provided student grades data for {len(students)} students")
+    if student_grades_data is not None:
+        # Ensure student_grades_data is a dictionary
+        if isinstance(student_grades_data, dict):
+            students = student_grades_data
+            print(f"Using provided student grades data for {len(students)} students")
+        else:
+            # If it's a list, convert it to a dictionary
+            students = {}
+            for student in student_grades_data:
+                if 'user_id' in student:
+                    students[student['user_id']] = student
+                elif 'id' in student:
+                    students[student['id']] = student
+            print(f"Converted list to dictionary with {len(students)} students")
     elif grades_file:
         students = read_grades_csv(grades_file)
         print(f"Read grades for {len(students)} students from {grades_file}")
@@ -108,28 +116,42 @@ def process_student_grades(student_grades_data=None, grades_file=None, output_di
     # Create AI integration using environment variables
     ai = AIIntegration()
     
+    # Create output directory if it doesn't exist
+    is_lambda = os.environ.get('AWS_LAMBDA_FUNCTION_NAME') is not None or os.environ.get('BlackBelt_Studyplan_AI_Automation') is not None
+    if is_lambda:
+        full_output_dir = os.path.join('/tmp', output_dir)
+    else:
+        full_output_dir = output_dir
+        
+    if not os.path.exists(full_output_dir):
+        os.makedirs(full_output_dir)
+    
     # Generate and save study plans for each student
+    study_plans = {}
     for i, (student_id, student_data) in enumerate(students.items()):
-        print(f"Generating study plan for {student_data['fullname']} ({i+1}/{len(students)})...")
+        student_name = student_data.get('fullname', '')
+        print(f"Generating study plan for {student_name} ({i+1}/{len(students)})...")
         
         try:
             # Generate study plan
             study_plan = ai.generate_study_plan(student_data)
             
             # Save the study plan
-            save_study_plan(student_id, student_data['fullname'], study_plan, output_dir)
+            plan_path = save_study_plan(student_id, student_name, study_plan, full_output_dir)
+            study_plans[student_id] = plan_path
             
             # Add a delay between API calls to avoid overwhelming the API
-            # Only add delay if not the last student
             if i < len(students) - 1:
                 delay = 2  # 2 seconds delay between API calls
                 print(f"Waiting {delay} seconds before next API call...")
                 time.sleep(delay)
             
         except Exception as e:
-            print(f"Error generating study plan for {student_data['fullname']}: {e}")
+            print(f"Error generating study plan for {student_name}: {e}")
             # Continue with the next student even if one fails
             continue
+    
+    return study_plans
 
 # Example usage
 if __name__ == "__main__":

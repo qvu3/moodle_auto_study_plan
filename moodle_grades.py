@@ -37,6 +37,11 @@ def get_moodle_student_grades(course_id: Optional[int] = None):
         student_grades = moodle.process_student_grades(course_id)
         print(f"Retrieved grades for {len(student_grades)} students")
         
+        # Add debug logging
+        print(f"Student grades data type: {type(student_grades)}")
+        if student_grades:
+            print(f"First student data type: {type(next(iter(student_grades.values())))}")
+        
         return student_grades
     
     except Exception as e:

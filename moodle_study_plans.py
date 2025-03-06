@@ -42,24 +42,30 @@ def main():
     
     # Process grades and generate study plans
     print("Generating personalized study plans...")
-    output_dir = f"study_plans_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_dir = f"study_plans_{timestamp}"
     
-    # Check if running in Lambda environment (more reliable method)
-    is_lambda = os.environ.get('AWS_LAMBDA_FUNCTION_NAME') is not None
+    # Check if running in Lambda environment
+    is_lambda = os.environ.get('AWS_LAMBDA_FUNCTION_NAME') is not None or os.environ.get('BlackBelt_Studyplan_AI_Automation') is not None
     
-    # If running in Lambda, use the full path for matching study plans later
+    # Process grades and generate study plans
     if is_lambda:
         # Skip saving to CSV and pass student_grades directly
-        process_student_grades(student_grades_data=student_grades, output_dir=output_dir)
         full_output_dir = os.path.join('/tmp', output_dir)
+        study_plans = process_student_grades(student_grades_data=student_grades, output_dir=output_dir)
     else:
         # For local development, still save to CSV for debugging/record keeping
-        grades_file = save_grades_to_csv(student_grades, f"student_grades_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
+        grades_file = save_grades_to_csv(student_grades, f"student_grades_{timestamp}.csv")
         print(f"Grades saved to {grades_file}")
-        process_student_grades(grades_file=grades_file, output_dir=output_dir)
         full_output_dir = output_dir
+        study_plans = process_student_grades(grades_file=grades_file, output_dir=output_dir)
     
     print(f"Study plans generated and saved to {full_output_dir}/")
+    
+    # Ensure the directory exists before matching plans
+    if is_lambda and not os.path.exists(full_output_dir):
+        print(f"Creating output directory: {full_output_dir}")
+        os.makedirs(full_output_dir, exist_ok=True)
     
     # Get student information including email addresses
     print("Retrieving student information from Moodle...")

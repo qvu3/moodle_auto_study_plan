@@ -45,15 +45,34 @@ class AIIntegration:
         Returns:
             Formatted string of grades for the AI prompt
         """
+        # Add debug logging
+        print(f"Student data type: {type(student_data)}")
+        print(f"Student data keys: {list(student_data.keys()) if isinstance(student_data, dict) else 'Not a dictionary'}")
+        
         formatted_data = f"Student: {student_data.get('fullname', 'Unknown')}\n\n"
         formatted_data += "Grades:\n"
         
-        # Add grades information
+        # Add grades information - handle different data structures
         if 'grades' in student_data:
-            for subject, grade in student_data['grades'].items():
-                # Skip empty grades or grades with HTML
-                if grade != "- (-)" and grade != "" and "<" not in grade:
-                    formatted_data += f"- {subject}: {grade}\n"
+            grades = student_data['grades']
+            
+            # If grades is a dictionary
+            if isinstance(grades, dict):
+                for subject, grade in grades.items():
+                    # Skip empty grades or grades with HTML
+                    if grade != "- (-)" and grade != "" and "<" not in grade:
+                        formatted_data += f"- {subject}: {grade}\n"
+            # If grades is a list
+            elif isinstance(grades, list):
+                for grade_item in grades:
+                    if isinstance(grade_item, dict):
+                        item_name = grade_item.get('item_name', 'Unknown')
+                        grade_value = grade_item.get('grade', '-')
+                        percentage = grade_item.get('percentage', '-')
+                        
+                        # Skip empty grades or grades with HTML
+                        if grade_value != "- (-)" and grade_value != "" and "<" not in str(grade_value):
+                            formatted_data += f"- {item_name}: {grade_value} ({percentage})\n"
         
         return formatted_data
     
