@@ -2,19 +2,28 @@ import requests
 import json
 import os
 from typing import Dict, List, Any, Optional
-import moodle_config
+import config
 
 class MoodleAPI:
-    def __init__(self, base_url: str, token: str):
+    def __init__(self, base_url: Optional[str] = None, token: Optional[str] = None):
         """
         Initialize the Moodle API client.
         
         Args:
             base_url: The base URL of your Moodle site (e.g., 'https://moodle.example.com')
+                      If None, uses the value from environment variables
             token: Your Moodle API token
+                   If None, uses the value from environment variables
         """
-        self.base_url = base_url.rstrip('/')
-        self.token = token
+        self.base_url = base_url if base_url is not None else config.MOODLE_URL
+        self.token = token if token is not None else config.MOODLE_TOKEN
+        
+        if not self.base_url:
+            raise ValueError("Moodle URL is not set. Please set the MOODLE_URL environment variable.")
+        if not self.token:
+            raise ValueError("Moodle API token is not set. Please set the MOODLE_TOKEN environment variable.")
+            
+        self.base_url = self.base_url.rstrip('/')
         self.web_service_url = f"{self.base_url}/webservice/rest/server.php"
     
     def call_api(self, function: str, params: Dict[str, Any] = None) -> Dict:
@@ -207,8 +216,8 @@ class MoodleAPI:
 # Example usage
 if __name__ == "__main__":
     # Replace with your actual Moodle site URL and token
-    MOODLE_URL = moodle_config.MOODLE_URL
-    MOODLE_TOKEN = moodle_config.MOODLE_TOKEN
+    MOODLE_URL = config.MOODLE_URL
+    MOODLE_TOKEN = config.MOODLE_TOKEN
     
     # Create the Moodle API client
     moodle = MoodleAPI(MOODLE_URL, MOODLE_TOKEN)

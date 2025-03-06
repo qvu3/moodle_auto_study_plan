@@ -6,10 +6,10 @@ Script to process student grades and generate personalized study plans using AI.
 import csv
 import os
 import json
+import time
 from typing import Dict, Any, List
 from ai_integration import AIIntegration
-import ai_config
-import time
+import config
 
 def read_grades_csv(csv_file: str) -> Dict[str, Dict[str, Any]]:
     """
@@ -86,8 +86,8 @@ def process_student_grades(grades_file: str, output_dir: str = "study_plans"):
     students = read_grades_csv(grades_file)
     print(f"Read grades for {len(students)} students")
     
-    # Create AI integration
-    ai = AIIntegration(ai_config.AI_API_KEY, ai_config.AI_API_TYPE)
+    # Create AI integration using environment variables
+    ai = AIIntegration()
     
     # Generate and save study plans for each student
     for i, (student_id, student_data) in enumerate(students.items()):

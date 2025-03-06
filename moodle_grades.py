@@ -8,25 +8,25 @@ import csv
 from datetime import datetime
 from typing import Dict, Any, Optional
 from moodle_api import MoodleAPI
-import moodle_config
+import config
 
 def get_moodle_student_grades(course_id: Optional[int] = None):
     """
     Retrieve student grades from Moodle using the Moodle API.
     
     Args:
-        course_id: Optional course ID. If not provided, uses the one from moodle_config.
+        course_id: Optional course ID. If not provided, uses the one from environment variables.
         
     Returns:
         A dictionary mapping student IDs to their grade information
     """
     try:
         # Create the Moodle API client
-        moodle = MoodleAPI(moodle_config.MOODLE_URL, moodle_config.MOODLE_TOKEN)
+        moodle = MoodleAPI()
         
         # Get the course ID from the config if not provided
         if course_id is None:
-            course_id = moodle_config.COURSE_ID
+            course_id = config.MOODLE_COURSE_ID
         
         # Get all users in the course
         users = moodle.get_users_in_course(course_id)
@@ -100,7 +100,7 @@ def get_module_grades(course_id: int, module_id: int, module_type: str):
     """
     try:
         # Create the Moodle API client
-        moodle = MoodleAPI(moodle_config.MOODLE_URL, moodle_config.MOODLE_TOKEN)
+        moodle = MoodleAPI()
         
         # Get module grades
         grades = moodle.get_module_grades(course_id, module_id, module_type)

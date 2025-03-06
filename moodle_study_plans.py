@@ -7,15 +7,28 @@ and send them to students via email.
 from moodle_grades import get_moodle_student_grades, save_grades_to_csv
 from grades_process import process_student_grades
 from moodle_students import get_student_info, match_study_plans_to_students, send_all_study_plans
-import email_config
+import config
 import os
 from datetime import datetime
+import sys
 
 def main():
     """
     Main function to retrieve grades, generate study plans, and send them to students.
     """
     print("Starting Moodle grades retrieval and study plan generation...")
+    
+    # Validate configuration
+    missing_config = config.validate_config()
+    if missing_config:
+        print("Error: Missing or invalid configuration:")
+        for key, message in missing_config.items():
+            print(f"  - {key}: {message}")
+        print("\nPlease check your .env file or environment variables.")
+        return
+    
+    # Print configuration summary
+    print(config.get_config_summary())
     
     # Get student grades from Moodle
     print("Retrieving student grades from Moodle...")
@@ -57,14 +70,7 @@ def main():
     # Send study plans to students
     if matched_plans:
         print("Sending study plans to students...")
-        results = send_all_study_plans(
-            students,
-            matched_plans,
-            email_config.SMTP_SERVER,
-            email_config.SMTP_PORT,
-            email_config.SENDER_EMAIL,
-            email_config.SENDER_PASSWORD
-        )
+        results = send_all_study_plans(students, matched_plans)
         
         # Print results
         success_count = sum(1 for success in results.values() if success)
@@ -75,4 +81,11 @@ def main():
     print("Process completed successfully.")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nProcess interrupted by user.")
+        sys.exit(1)
+    except Exception as e:
+        print(f"\nError: {e}")
+        sys.exit(1)

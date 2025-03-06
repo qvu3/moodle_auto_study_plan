@@ -7,7 +7,7 @@ import os
 import csv
 from typing import Dict, Any, List, Optional
 from moodle_api import MoodleAPI
-import moodle_config
+import config
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -18,18 +18,18 @@ def get_student_info(course_id: Optional[int] = None) -> Dict[str, Dict[str, Any
     Retrieve student information from Moodle, including email addresses.
     
     Args:
-        course_id: Optional course ID. If not provided, uses the one from moodle_config.
+        course_id: Optional course ID. If not provided, uses the one from environment variables.
         
     Returns:
         A dictionary mapping student IDs to their information
     """
     try:
         # Create the Moodle API client
-        moodle = MoodleAPI(moodle_config.MOODLE_URL, moodle_config.MOODLE_TOKEN)
+        moodle = MoodleAPI()
         
         # Get the course ID from the config if not provided
         if course_id is None:
-            course_id = moodle_config.COURSE_ID
+            course_id = config.MOODLE_COURSE_ID
         
         # Get all users in the course
         users = moodle.get_users_in_course(course_id)
@@ -97,23 +97,34 @@ def match_study_plans_to_students(study_plans_dir: str, students: Dict[str, Dict
     return matched_plans
 
 def send_study_plan_email(student: Dict[str, Any], study_plan_path: str, 
-                          smtp_server: str, smtp_port: int, 
-                          sender_email: str, sender_password: str) -> bool:
+                          smtp_server: Optional[str] = None, smtp_port: Optional[int] = None, 
+                          sender_email: Optional[str] = None, sender_password: Optional[str] = None) -> bool:
     """
     Send a study plan to a student via email.
     
     Args:
         student: Dictionary containing student information
         study_plan_path: Path to the study plan file
-        smtp_server: SMTP server address
-        smtp_port: SMTP server port
-        sender_email: Sender's email address
-        sender_password: Sender's email password
+        smtp_server: SMTP server address. If None, uses the value from environment variables.
+        smtp_port: SMTP server port. If None, uses the value from environment variables.
+        sender_email: Sender's email address. If None, uses the value from environment variables.
+        sender_password: Sender's email password. If None, uses the value from environment variables.
         
     Returns:
         True if the email was sent successfully, False otherwise
     """
     try:
+        # Use environment variables if parameters are not provided
+        smtp_server = smtp_server if smtp_server is not None else config.SMTP_SERVER
+        smtp_port = smtp_port if smtp_port is not None else config.SMTP_PORT
+        sender_email = sender_email if sender_email is not None else config.SENDER_EMAIL
+        sender_password = sender_password if sender_password is not None else config.SENDER_PASSWORD
+        
+        # Check if required email settings are available
+        if not smtp_server or not sender_email or not sender_password:
+            print("Email settings are not complete. Please check your environment variables.")
+            return False
+        
         # Check if student has an email
         if not student.get('email'):
             print(f"No email address found for student {student.get('fullname', 'Unknown')}")
@@ -127,7 +138,7 @@ def send_study_plan_email(student: Dict[str, Any], study_plan_path: str,
         msg = MIMEMultipart()
         msg['From'] = sender_email
         msg['To'] = student['email']
-        msg['Subject'] = f"Your Personalized Study Plan - {student.get('fullname', 'Student')}"
+        msg['Subject'] = f"{config.EMAIL_SUBJECT_PREFIX}{student.get('fullname', 'Student')}"
         
         # Add HTML body
         html = f"""
@@ -152,7 +163,7 @@ def send_study_plan_email(student: Dict[str, Any], study_plan_path: str,
               
               <p>We hope this plan helps you achieve your goals. If you have any questions or need further assistance, please don't hesitate to reach out.</p>
               
-              <p>Best regards,<br>Black Belt Test Prep Team</p>
+              <p>Best regards,<br>{config.SENDER_NAME}</p>
               
               <div class="footer">
                 <p>This is an automated email. Please do not reply directly to this message.</p>
@@ -184,18 +195,20 @@ def send_study_plan_email(student: Dict[str, Any], study_plan_path: str,
 
 def send_all_study_plans(students: Dict[str, Dict[str, Any]], 
                          matched_plans: Dict[str, str],
-                         smtp_server: str, smtp_port: int,
-                         sender_email: str, sender_password: str) -> Dict[str, bool]:
+                         smtp_server: Optional[str] = None, 
+                         smtp_port: Optional[int] = None,
+                         sender_email: Optional[str] = None, 
+                         sender_password: Optional[str] = None) -> Dict[str, bool]:
     """
     Send study plans to all matched students.
     
     Args:
         students: Dictionary of student information
         matched_plans: Dictionary mapping student IDs to study plan file paths
-        smtp_server: SMTP server address
-        smtp_port: SMTP server port
-        sender_email: Sender's email address
-        sender_password: Sender's email password
+        smtp_server: SMTP server address. If None, uses the value from environment variables.
+        smtp_port: SMTP server port. If None, uses the value from environment variables.
+        sender_email: Sender's email address. If None, uses the value from environment variables.
+        sender_password: Sender's email password. If None, uses the value from environment variables.
         
     Returns:
         Dictionary mapping student IDs to success status

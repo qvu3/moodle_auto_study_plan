@@ -7,27 +7,33 @@ import requests
 from typing import Dict, Any
 import time
 import random
+import config
 
 class AIIntegration:
-    def __init__(self, api_key: str, api_type: str = "anthropic", max_retries: int = 5):
+    def __init__(self, api_key: str = None, api_type: str = None, max_retries: int = None):
         """
         Initialize the AI integration.
         
         Args:
-            api_key: The API key for the AI service
-            api_type: The type of AI API to use ("anthropic" or "openai")
-            max_retries: Maximum number of retry attempts for API calls
+            api_key: The API key for the AI service. If None, uses the value from environment variables.
+            api_type: The type of AI API to use ("anthropic" or "openai"). If None, uses the value from environment variables.
+            max_retries: Maximum number of retry attempts for API calls. If None, uses the value from environment variables.
         """
-        self.api_key = api_key
-        self.api_type = api_type.lower()
-        self.max_retries = max_retries
+        self.api_key = api_key if api_key is not None else config.AI_API_KEY
+        self.api_type = api_type if api_type is not None else config.AI_API_TYPE
+        self.max_retries = max_retries if max_retries is not None else config.AI_MAX_RETRIES
+        
+        if not self.api_key:
+            raise ValueError("AI API key is not set. Please set the AI_API_KEY environment variable.")
+            
+        self.api_type = self.api_type.lower()
         
         if self.api_type == "anthropic":
             self.api_url = "https://api.anthropic.com/v1/messages"
         elif self.api_type == "openai":
             self.api_url = "https://api.openai.com/v1/chat/completions"
         else:
-            raise ValueError(f"Unsupported API type: {api_type}")
+            raise ValueError(f"Unsupported API type: {self.api_type}. Please use 'anthropic' or 'openai'.")
     
     def format_student_grades(self, student_data: Dict[str, Any]) -> str:
         """
