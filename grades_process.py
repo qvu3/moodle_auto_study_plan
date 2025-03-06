@@ -60,6 +60,13 @@ def save_study_plan(student_id: str, student_name: str, study_plan: str, output_
         study_plan: The generated study plan
         output_dir: Directory to save the study plans
     """
+    # Check if running in Lambda environment
+    is_lambda = os.environ.get('BlackBelt_Studyplan_AI_Automation') is not None
+    
+    # If running in Lambda, use /tmp directory
+    if is_lambda:
+        output_dir = os.path.join('/tmp', output_dir)
+    
     # Create the output directory if it doesn't exist
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -73,6 +80,7 @@ def save_study_plan(student_id: str, student_name: str, study_plan: str, output_
         file.write(study_plan)
     
     print(f"Study plan saved to {filename}")
+    return filename  # Return the filename for easier access
 
 def process_student_grades(grades_file: str, output_dir: str = "study_plans"):
     """

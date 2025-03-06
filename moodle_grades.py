@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 from moodle_api import MoodleAPI
 import config
+import os
 
 def get_moodle_student_grades(course_id: Optional[int] = None):
     """
@@ -53,9 +54,17 @@ def save_grades_to_csv(student_grades, filename=None):
     Returns:
         The path to the saved CSV file
     """
+    # Check if running in Lambda environment
+    is_lambda = os.environ.get('BlackBelt_Studyplan_AI_Automation') is not None
+    
     if filename is None:
+        from datetime import datetime
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"student_grades_{timestamp}.csv"
+    
+    # If running in Lambda, use /tmp directory
+    if is_lambda:
+        filename = os.path.join('/tmp', filename)
     
     with open(filename, 'w', newline='') as csvfile:
         # Determine all possible grade items

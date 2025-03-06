@@ -48,8 +48,19 @@ def main():
     # Process grades and generate study plans
     print("Generating personalized study plans...")
     output_dir = f"study_plans_{timestamp}"
-    process_student_grades(grades_file, output_dir)
-    print(f"Study plans generated and saved to {output_dir}/")
+    
+    # Check if running in Lambda environment
+    is_lambda = os.environ.get('BlackBelt_Studyplan_AI_Automation') is not None
+    
+    # If running in Lambda, use the full path for matching study plans later
+    if is_lambda:
+        process_student_grades(grades_file, output_dir)
+        full_output_dir = os.path.join('/tmp', output_dir)
+    else:
+        process_student_grades(grades_file, output_dir)
+        full_output_dir = output_dir
+    
+    print(f"Study plans generated and saved to {full_output_dir}/")
     
     # Get student information including email addresses
     print("Retrieving student information from Moodle...")
@@ -64,7 +75,7 @@ def main():
     
     # Match study plans to students
     print("Matching study plans to students...")
-    matched_plans = match_study_plans_to_students(output_dir, students)
+    matched_plans = match_study_plans_to_students(full_output_dir, students)
     print(f"Matched {len(matched_plans)} study plans to students.")
     
     # Send study plans to students
