@@ -8,6 +8,7 @@ from typing import Dict, Any
 import time
 import random
 import config
+import google.generativeai as genai
 
 class AIIntegration:
     def __init__(self, api_key: str = None, api_type: str = None, max_retries: int = None):
@@ -32,8 +33,11 @@ class AIIntegration:
             self.api_url = "https://api.anthropic.com/v1/messages"
         elif self.api_type == "openai":
             self.api_url = "https://api.openai.com/v1/chat/completions"
+        elif self.api_type == "google_gemini":
+            genai.configure(api_key=self.api_key)
+            self.model_name = "gemini-2.5-flash-preview-05-20" # Using the specific model for preview
         else:
-            raise ValueError(f"Unsupported API type: {self.api_type}. Please use 'anthropic' or 'openai'.")
+            raise ValueError(f"Unsupported API type: {self.api_type}. Please use 'anthropic', 'openai' or 'google_gemini'.")
     
     def format_student_grades(self, student_data: Dict[str, Any]) -> str:
         """
@@ -212,6 +216,29 @@ class AIIntegration:
         # If we've exhausted all retries, raise an exception
         raise Exception(f"API call failed after {self.max_retries} attempts. Last status code: {response.status_code}, response: {response.text}")
     
+    def call_gemini_api(self, prompt: str) -> str:
+        """
+        Call the Google Gemini API to generate a study plan with retry logic.
+
+        Args:
+            prompt: The prompt for the AI
+
+        Returns:
+            The generated study plan
+        """
+        # Implement retry with exponential backoff
+        for attempt in range(self.max_retries):
+            try:
+                model = genai.GenerativeModel(self.model_name)
+                response = model.generate_content(prompt)
+                return response.text
+            except Exception as e:
+                wait_time = (2 ** attempt) + random.random()  # Exponential backoff with jitter
+                print(f"Gemini API error: {e}. Retrying in {wait_time:.2f} seconds (attempt {attempt+1}/{self.max_retries})...")
+                time.sleep(wait_time)
+        
+        raise Exception(f"Gemini API call failed after {self.max_retries} attempts.")
+    
     def generate_study_plan(self, student_data: Dict[str, Any]) -> str:
         """
         Generate a personalized study plan for a student based on their grades.
@@ -228,5 +255,7 @@ class AIIntegration:
             return self.call_anthropic_api(prompt)
         elif self.api_type == "openai":
             return self.call_openai_api(prompt)
+        elif self.api_type == "google_gemini":
+            return self.call_gemini_api(prompt)
         else:
             raise ValueError(f"Unsupported API type: {self.api_type}")

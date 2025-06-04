@@ -13,7 +13,7 @@ load_dotenv()
 # Moodle API Configuration
 MOODLE_URL = os.getenv('MOODLE_URL')
 MOODLE_TOKEN = os.getenv('MOODLE_TOKEN')
-MOODLE_COURSE_ID = int(os.getenv('MOODLE_COURSE_ID', '0'))
+MOODLE_COURSE_ID = int(os.getenv('MOODLE_COURSE_ID', '9'))
 
 # AI API Configuration
 AI_API_TYPE = os.getenv('AI_API_TYPE', 'anthropic')
@@ -48,7 +48,7 @@ def validate_config() -> Dict[str, str]:
     # Check AI API configuration
     if not AI_API_KEY:
         missing['AI_API_KEY'] = 'Missing AI API key'
-    if AI_API_TYPE not in ['anthropic', 'openai']:
+    if AI_API_TYPE not in ['anthropic', 'openai', 'google_gemini']:
         missing['AI_API_TYPE'] = f'Invalid AI API type: {AI_API_TYPE}'
     
     # Check email configuration
