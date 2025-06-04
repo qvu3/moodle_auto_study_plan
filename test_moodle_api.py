@@ -6,7 +6,7 @@ This script tests the connection to the Moodle API and retrieves basic informati
 
 import sys
 from moodle_api import MoodleAPI
-import moodle_config
+import config
 from moodle_grades import get_moodle_student_grades, save_grades_to_csv
 
 def test_moodle_connection():
@@ -15,7 +15,7 @@ def test_moodle_connection():
     
     try:
         # Create the Moodle API client
-        moodle = MoodleAPI(moodle_config.MOODLE_URL, moodle_config.MOODLE_TOKEN)
+        moodle = MoodleAPI(config.MOODLE_URL, config.MOODLE_TOKEN)
         
         # Test getting courses
         print("\nTesting get_courses()...")
@@ -29,7 +29,7 @@ def test_moodle_connection():
                 print(f"  {i+1}. {course.get('fullname', 'Unknown')} (ID: {course.get('id', 'Unknown')})")
         
         # Test getting course by ID
-        course_id = moodle_config.COURSE_ID
+        course_id = config.MOODLE_COURSE_ID
         print(f"\nTesting get_course_by_id({course_id})...")
         try:
             course = moodle.get_course_by_id(course_id)
