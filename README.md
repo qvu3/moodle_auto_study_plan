@@ -6,7 +6,7 @@ This project automatically retrieves student grades from Moodle, generates perso
 
 - Connects to Moodle API to retrieve student grades and information
 - Processes grades to identify areas for improvement
-- Generates personalized study plans using AI (Anthropic Claude or OpenAI)
+- Generates personalized study plans using AI (OpenAI GPT, Anthropic Claude, or Google Gemini)
 - Sends study plans to students via email
 - Can be run locally or deployed to AWS Lambda
 
@@ -14,7 +14,7 @@ This project automatically retrieves student grades from Moodle, generates perso
 
 - Python 3.8 or higher
 - Moodle instance with API access enabled
-- API key for Anthropic Claude or OpenAI
+- API key for OpenAI GPT, Anthropic Claude, or Google Gemini
 - SMTP server access for sending emails
 
 ## Installation
@@ -54,7 +54,7 @@ The following environment variables need to be set in the `.env` file or in your
 
 ### AI API Configuration
 
-- `AI_API_TYPE`: The AI API to use (`anthropic` or `openai`)
+- `AI_API_TYPE`: The AI API to use (`openai`, `anthropic`, or `google_gemini`) - defaults to `openai`
 - `AI_API_KEY`: Your API key
 - `AI_MAX_RETRIES`: Maximum number of retry attempts for API calls
 

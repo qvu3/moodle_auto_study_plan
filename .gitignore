@@ -30,8 +30,9 @@ ENV/
 # Generated files
 student_grades_*.csv
 study_plans_*/
-
-
+lambda_layer/
+lambda_layer.zip
+lambda_package.zip
 
 # Logs
 *.log
@@ -84,3 +85,26 @@ Thumbs.db
 
 # Downloaded attachments (if your script saves them)
 attachments/
+
+# Created by https://www.toptal.com/developers/gitignore/api/windows,macos,linux,python,django,react
+# Edit at https://www.toptal.com/developers/gitignore?templates=windows,macos,linux,python,django,react
+
+### Django ###
+# ... existing code ...
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media
+
+# Lambda packages
+package/
+lambda_package.zip
+lambda_layer/
+lambda_layer.zip
+
+### Python ###
+# ... existing code ...

@@ -9,6 +9,8 @@ import time
 import random
 import config
 import google.generativeai as genai
+import pandas as pd
+from openai import OpenAI
 
 class AIIntegration:
     def __init__(self, api_key: str = None, api_type: str = None, max_retries: int = None):
@@ -17,7 +19,7 @@ class AIIntegration:
         
         Args:
             api_key: The API key for the AI service. If None, uses the value from environment variables.
-            api_type: The type of AI API to use ("anthropic" or "openai"). If None, uses the value from environment variables.
+            api_type: The type of AI API to use ("anthropic", "openai", or "google_gemini"). If None, uses the value from environment variables.
             max_retries: Maximum number of retry attempts for API calls. If None, uses the value from environment variables.
         """
         self.api_key = api_key if api_key is not None else config.AI_API_KEY
@@ -32,7 +34,8 @@ class AIIntegration:
         if self.api_type == "anthropic":
             self.api_url = "https://api.anthropic.com/v1/messages"
         elif self.api_type == "openai":
-            self.api_url = "https://api.openai.com/v1/chat/completions"
+            # Initialize OpenAI client for v1.0+
+            self.openai_client = OpenAI(api_key=self.api_key)
         elif self.api_type == "google_gemini":
             genai.configure(api_key=self.api_key)
             self.model_name = "gemini-2.5-flash-preview-05-20" # Using the specific model for preview
@@ -101,7 +104,7 @@ class AIIntegration:
         The study plan should:
         1. Identify weak areas that need improvement based on the grades
         2. Suggest specific topics to focus on
-        3. Recommend study techniques and resources (prioritize resources from Black Belt Test Prep such as quizzes, flashcards, and practice tests)
+        3. Recommend study techniques and resources
         4. Provide a daily schedule for the week
         5. Include motivational elements and encouragement
         
@@ -165,7 +168,7 @@ class AIIntegration:
     
     def call_openai_api(self, prompt: str) -> str:
         """
-        Call the OpenAI API to generate a study plan with retry logic.
+        Call the OpenAI API to generate a study plan with retry logic using OpenAI 1.0+ client.
         
         Args:
             prompt: The prompt for the AI
@@ -173,48 +176,28 @@ class AIIntegration:
         Returns:
             The generated study plan
         """
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-        
-        data = {
-            "model": "gpt-4o",
-            "messages": [
-                {"role": "system", "content": "You are an expert educational advisor specializing in personalized study plans."},
-                {"role": "user", "content": prompt}
-            ],
-            "max_tokens": 4000
-        }
-        
         # Implement retry with exponential backoff
         for attempt in range(self.max_retries):
             try:
-                response = requests.post(self.api_url, headers=headers, json=data)
+                response = self.openai_client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {"role": "system", "content": "You are an expert educational advisor specializing in personalized study plans."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=4000
+                )
                 
-                # If successful, return the result
-                if response.status_code == 200:
-                    result = response.json()
-                    return result["choices"][0]["message"]["content"]
+                return response.choices[0].message.content
                 
-                # If rate limited, retry with backoff
-                if response.status_code == 429:
-                    wait_time = (2 ** attempt) + random.random()  # Exponential backoff with jitter
-                    print(f"API rate limited. Retrying in {wait_time:.2f} seconds (attempt {attempt+1}/{self.max_retries})...")
-                    time.sleep(wait_time)
-                    continue
-                
-                # For other errors, raise an exception
-                response.raise_for_status()
-                
-            except requests.exceptions.RequestException as e:
-                # For network errors, retry with backoff
-                wait_time = (2 ** attempt) + random.random()
-                print(f"Request error: {e}. Retrying in {wait_time:.2f} seconds (attempt {attempt+1}/{self.max_retries})...")
+            except Exception as e:
+                # Handle rate limiting and other errors
+                wait_time = (2 ** attempt) + random.random()  # Exponential backoff with jitter
+                print(f"OpenAI API error: {e}. Retrying in {wait_time:.2f} seconds (attempt {attempt+1}/{self.max_retries})...")
                 time.sleep(wait_time)
         
         # If we've exhausted all retries, raise an exception
-        raise Exception(f"API call failed after {self.max_retries} attempts. Last status code: {response.status_code}, response: {response.text}")
+        raise Exception(f"OpenAI API call failed after {self.max_retries} attempts.")
     
     def call_gemini_api(self, prompt: str) -> str:
         """
@@ -259,3 +242,30 @@ class AIIntegration:
             return self.call_gemini_api(prompt)
         else:
             raise ValueError(f"Unsupported API type: {self.api_type}")
+
+def generate_study_plan_from_questions(questions_df):
+    """
+    Generate a personalized study plan based on incorrectly answered questions.
+    """
+    if questions_df.empty:
+        return "No incorrectly answered questions found in the last week. Keep up the great work!"
+
+    prompt = "Here are the questions a student answered incorrectly in the last 7 days:\n\n"
+    for index, row in questions_df.iterrows():
+        prompt += f"Question: {row['question_text']}\n"
+        prompt += f"User's Answer: {row['user_answer']}\n"
+        prompt += f"Correct Answer: {row['correct_answer']}\n\n"
+
+    prompt += "Based on these incorrect answers, please generate a personalized study plan for the next week. The study plan should focus on the topics covered in these questions and provide resources or suggestions for improvement."
+
+    # Create an AI integration instance
+    ai_integration = AIIntegration()
+    
+    if ai_integration.api_type == "anthropic":
+        return ai_integration.call_anthropic_api(prompt)
+    elif ai_integration.api_type == "openai":
+        return ai_integration.call_openai_api(prompt)
+    elif ai_integration.api_type == "google_gemini":
+        return ai_integration.call_gemini_api(prompt)
+    else:
+        raise ValueError(f"Invalid AI_API_TYPE: {ai_integration.api_type}")

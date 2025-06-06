@@ -98,7 +98,8 @@ def match_study_plans_to_students(study_plans_dir: str, students: Dict[str, Dict
 
 def send_study_plan_email(student: Dict[str, Any], study_plan_path: str, 
                           smtp_server: Optional[str] = None, smtp_port: Optional[int] = None, 
-                          sender_email: Optional[str] = None, sender_password: Optional[str] = None) -> bool:
+                          sender_email: Optional[str] = None, sender_password: Optional[str] = None,
+                          custom_subject: Optional[str] = None) -> bool:
     """
     Send a study plan to a student via email.
     
@@ -109,6 +110,7 @@ def send_study_plan_email(student: Dict[str, Any], study_plan_path: str,
         smtp_port: SMTP server port. If None, uses the value from environment variables.
         sender_email: Sender's email address. If None, uses the value from environment variables.
         sender_password: Sender's email password. If None, uses the value from environment variables.
+        custom_subject: Custom email subject. If None, uses the default format.
         
     Returns:
         True if the email was sent successfully, False otherwise
@@ -138,7 +140,7 @@ def send_study_plan_email(student: Dict[str, Any], study_plan_path: str,
         msg = MIMEMultipart()
         msg['From'] = sender_email
         msg['To'] = student['email']
-        msg['Subject'] = f"{config.EMAIL_SUBJECT_PREFIX}{student.get('fullname', 'Student')}"
+        msg['Subject'] = custom_subject if custom_subject else f"{config.EMAIL_SUBJECT_PREFIX}{student.get('fullname', 'Student')}"
         
         # Add HTML body
         html = f"""
